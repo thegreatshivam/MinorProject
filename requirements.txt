@@ -1,0 +1,6 @@
+speechrecognition
+wave
+pyaudio
+pyqt5
+deep-translator
+argostranslate

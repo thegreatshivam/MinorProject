@@ -10,7 +10,7 @@ from Output import Ui_outputDialog
 class Ui_mainWindow(object):
     def setupUi(self, mainWindow):
         mainWindow.setObjectName("mainWindow")
-        mainWindow.resize(800, 600)
+        mainWindow.setFixedSize(800, 600)
         self.centralwidget = QtWidgets.QWidget(mainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.recordButton = QtWidgets.QPushButton(self.centralwidget)
@@ -62,7 +62,7 @@ class Ui_mainWindow(object):
         global audio
         audio = pyaudio.PyAudio()
         global stream
-        stream = audio.open(format=pyaudio.paInt16, channels=1, rate=44000, input=True, frames_per_buffer=1024)
+        stream = audio.open(format=pyaudio.paInt16, channels=2, rate=48000, input=True, frames_per_buffer=1024)
         self.resume = True
         print("Recording")
         self.recording()
@@ -81,9 +81,9 @@ class Ui_mainWindow(object):
         audio.terminate()
 
         sound_file = wave.open("recording.wav", "wb")
-        sound_file.setnchannels(1)
+        sound_file.setnchannels(2)
         sound_file.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
-        sound_file.setframerate(44000)
+        sound_file.setframerate(44100)
         sound_file.writeframes(b''.join(self.frames))
         sound_file.close()
         self.convert()
@@ -96,9 +96,13 @@ class Ui_mainWindow(object):
         r = sr.Recognizer()
 
         with sr.AudioFile('recording.wav') as source:
+            r.adjust_for_ambient_noise(source, duration=1)
             audio_text = r.listen(source)
 
         try:
+            # Offline recognition
+            # text = r.recognize_sphinx(audio_text, language="en-IN")
+            # Online recognition
             text = r.recognize_google(audio_text)
             print(text)
             self.win = QtWidgets.QDialog()
@@ -127,15 +131,17 @@ class Ui_mainWindow(object):
                 f_name = f.name + ".wav"
                 import subprocess
                 #Set the path of ffmpeg.exe below
-                subprocess.call([sys._MEIPASS + 'path/to/ffmpeg.exe', '-y', '-i', f.name,
+                subprocess.call(['ffmpeg', '-y', '-i', f.name,
                                  f_name])
 
             r = sr.Recognizer()
 
             with sr.AudioFile(f_name) as source:
-                audio_text = r.listen(source)
-
+                audio_text = r.record(source)
             try:
+                # Offline recognition
+                # text = r.recognize_sphinx(audio_text, language="en-IN")
+                # Online recognition
                 text = r.recognize_google(audio_text)
                 print(text)
                 self.win = QtWidgets.QDialog()
@@ -144,8 +150,8 @@ class Ui_mainWindow(object):
                 self.ui.textBox.setPlainText(text)
                 self.win.exec_()
 
-            except Exception:
-                print("Something happened")
+            except Exception as e:
+                print(e + "Something happened")
                 self.win = QtWidgets.QDialog()
                 self.ui = Ui_errorDialog()
                 self.ui.setupUi(self.win)
