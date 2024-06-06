@@ -131,7 +131,7 @@ class Ui_mainWindow(object):
                 f_name = f.name + ".wav"
                 import subprocess
                 #Set the path of ffmpeg.exe below
-                subprocess.call(['ffmpeg', '-y', '-i', f.name,
+                subprocess.call(['path/to/ffmpeg', '-y', '-i', f.name,
                                  f_name])
 
             r = sr.Recognizer()
